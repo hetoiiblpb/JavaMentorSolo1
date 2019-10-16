@@ -4,24 +4,21 @@ import Model.User;
 import Util.DBConnection;
 import exception.DBException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserDAO {
-    private static UserDAO instance;
+public class UserDAOImplJDBC {
+    private static UserDAOImplJDBC instance;
     private static Connection connection;
 
-    private UserDAO() {
+    private UserDAOImplJDBC() {
         this.connection = DBConnection.getConnection();
     }
 
-    public static UserDAO getInstance() {
+    public static UserDAOImplJDBC getInstance() {
         if (instance == null) {
-            instance = new UserDAO();
+            instance = new UserDAOImplJDBC();
         }
         return instance;
     }
@@ -95,10 +92,20 @@ public class UserDAO {
     public boolean checkUserByEmail(String email) throws SQLException {
         PreparedStatement statement = connection.prepareStatement("SELECT * FROM users.users WHERE mail = ?");
         statement.setString(1, email);
-        boolean res = statement.executeQuery().next();
+        boolean res = !statement.executeQuery().next();
         statement.close();
         return res;
     }
 
+    public static void dropTable() throws SQLException {
+        Statement stmt = DBConnection.getConnection().createStatement();
+        stmt.executeUpdate("TRUNCATE TABLE users");
+        stmt.close();
+    }
 
+    public static void createTable() throws SQLException {
+        Statement stmt = DBConnection.getConnection().createStatement();
+        stmt.execute("create table if not exists users (id bigint auto_increment, name varchar(32), mail varchar(128), age bigint, primary key (id))");
+        stmt.close();
+    }
 }
